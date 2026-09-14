@@ -609,6 +609,10 @@ pub struct DISPLAYCONFIG_PATH_INFO {
     unsafe_code,
     reason = "Windows FFI declarations for Display Configuration API functions not in windows-rs 0.52"
 )]
+// These symbols are exported by user32.dll (import library user32.lib). Declare the link
+// explicitly: without it the lib test binary only resolved them by accident, via the umbrella
+// import library that older `windows-targets` versions dragged in transitively.
+#[link(name = "user32")]
 unsafe extern "system" {
     /// Gets the size of the buffers needed for `QueryDisplayConfig`
     pub fn GetDisplayConfigBufferSizes(
