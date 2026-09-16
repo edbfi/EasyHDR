@@ -100,7 +100,7 @@ jobs:
         persist-credentials: false
     - uses: j178/prek-action@v3.0.0
       with:
-        prek-version: 0.5.2
+        prek-version: v0.5.3
         extra-args: --all-files --hook-stage manual
       env:
         SKIP: no-commit-to-branch,cargo-fmt,cargo-clippy,cargo-test
