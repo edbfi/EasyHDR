@@ -3,5 +3,19 @@
   "extends": [
     "github>edbfi/automation//default.json#v2.0.0",
     "github>edbfi/automation//automerge.json#v2.0.0"
+  ],
+  "packageRules": [
+    {
+      "description": "Update the Slint runtime and build compiler together before resolving their exact shared compiler dependency.",
+      "matchManagers": [
+        "cargo"
+      ],
+      "matchPackageNames": [
+        "slint",
+        "slint-build"
+      ],
+      "groupName": "Slint",
+      "rangeStrategy": "bump"
+    }
   ]
 }
