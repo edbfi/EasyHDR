@@ -28,12 +28,12 @@ jobs:
     # Miri's generated sysroot manifest has an unused dependency. Build only
     # that upstream sysroot with warnings visible; project tests still deny them.
     - name: Prepare Miri sysroot
-      run: cargo +nightly-2026-09-07 miri setup
+      run: cargo miri setup
       env:
         CARGO_BUILD_WARNINGS: warn
     - name: Run Miri on portable code (error module)
       run: |
-        cargo +nightly-2026-09-07 miri test --locked --lib error -- --test-threads=1
+        cargo miri test --locked --lib error -- --test-threads=1
       env:
         MIRIFLAGS: -Zmiri-disable-isolation -Zmiri-symbolic-alignment-check
     timeout-minutes: 45
@@ -58,16 +58,16 @@ jobs:
     # Miri's generated sysroot manifest has an unused dependency. Build only
     # that upstream sysroot with warnings visible; project tests still deny them.
     - name: Prepare Miri sysroot
-      run: cargo +nightly-2026-09-07 miri setup
+      run: cargo miri setup
       env:
         CARGO_BUILD_WARNINGS: warn
     - name: Run Miri on all library tests
-      run: cargo +nightly-2026-09-07 miri test --locked --lib -- --test-threads=1
+      run: cargo miri test --locked --lib -- --test-threads=1
       env:
         MIRIFLAGS: -Zmiri-disable-isolation
       continue-on-error: true
     - name: Run Miri with strict checking on all tests
-      run: cargo +nightly-2026-09-07 miri test --locked --lib -- --test-threads=1
+      run: cargo miri test --locked --lib -- --test-threads=1
       env:
         MIRIFLAGS: -Zmiri-disable-isolation -Zmiri-strict-provenance -Zmiri-symbolic-alignment-check
       continue-on-error: true
