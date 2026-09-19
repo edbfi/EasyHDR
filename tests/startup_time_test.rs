@@ -1,7 +1,7 @@
-//! Startup time tests
+//! Startup profiler unit tests.
 //!
-//! This test module verifies that the application displays the GUI within 200ms
-//! and loads configuration efficiently.
+//! These simulated timings test the profiler, not application startup. The native
+//! Windows CI smoke launches the release executable and checks its GUI event loop.
 
 use easyhdr::utils::startup_profiler::{self, StartupPhase};
 use std::time::Duration;
@@ -136,7 +136,7 @@ fn test_global_profiler_instance() {
 }
 
 #[test]
-fn test_realistic_startup_scenario() {
+fn test_simulated_startup_phase_sequence() {
     // Simulate a realistic startup sequence with typical timings
     let profiler = startup_profiler::StartupProfiler::new();
 
