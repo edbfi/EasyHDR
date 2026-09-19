@@ -15,15 +15,11 @@
       ],
       "groupName": "Slint",
       "rangeStrategy": "bump"
-    },
-    {
-      "matchPackageNames": [
-        "*"
-      ],
-      "automerge": false
     }
   ],
-  "automerge": false,
+  "automerge": true,
   "platformAutomerge": false,
-  "ignoreTests": false
+  "ignoreTests": false,
+  "automergeStrategy": "rebase",
+  "automergeType": "pr"
 }

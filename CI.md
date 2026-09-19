@@ -6,10 +6,11 @@ and tests, security workflow, portable Miri workflow and repository hygiene.
 Missing, skipped, cancelled or failed required jobs block merging.
 
 Shared actions, workflows and presets use immutable `v3.0.1` references.
-Renovate is the sole ongoing dependency merge owner. Direct automerge remains
-explicitly disabled, including matching package rules, until the hosted rollout
-proves native Renovate operation behind complete required CI. The legacy Actions
-merger and its comment commands are retired.
+Renovate is the sole ongoing dependency merge owner. It merges eligible dependency
+PRs by rebasing only after current required CI and policy checks pass. Native
+platform automerge stays off. Shared Renovate policy updates remain manual;
+release-age rules, holds and repository-specific updater ownership still apply.
+The legacy Actions merger and its comment commands are retired.
 
 The separate PR policy workflow verifies Conventional Commit titles, genuine
 matching author sign-offs, Renovate provenance, holds, outstanding review requests
@@ -70,14 +71,15 @@ The existing advisory exceptions in `deny.toml` and `.cargo/audit.toml` remain
 explicit; this rollout does not add new advisory ignores. Security checks also run
 daily. Informational cargo-geiger runs on that schedule and remains outside the
 required security checks. The portable Miri error-module test is mandatory using
-`nightly-2026-09-07`; its existing symbolic-alignment/isolation flags are retained.
+a pinned nightly; its existing symbolic-alignment/isolation flags are retained.
 Broader best-effort Miri runs stay weekly because their dependency/FFI limitations
-are already documented in the workflow. The nightly date needs manual maintenance
-when newer Miri/compiler behavior is adopted.
+are already documented in the workflow. Renovate maintains the nightly pin through
+PRs that must pass the portable Miri test before merging.
 
 The shared Renovate preset retains non-major grouping, manages Cargo, actions,
 hooks and the stable toolchain, and keeps immutable shared workflow references
-current through PRs. Native automerge stays disabled during the canary rollout.
+current through PRs. Eligible dependency updates use the checked Renovate merge
+policy described above; shared Renovate configuration changes remain manual.
 No tests or advisory gates are weakened.
 
 Release publishing waits for the full development pipeline. VirusTotal uses release
