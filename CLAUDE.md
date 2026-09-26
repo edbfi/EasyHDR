@@ -94,9 +94,6 @@ Users' existing `%APPDATA%\EasyHDR\config.json` files must keep loading. If pars
   `crate::test_utils::{AppdataGuard, create_test_dir}`. Otherwise they write to the real
   `%APPDATA%\EasyHDR`, or to `./EasyHDR` when `APPDATA` is unset. Integration tests can't reach
   `test_utils`; pass a `TempDir` to `IconCache::new` instead, as `tests/icon_cache_tests.rs` does.
-- The CI smoke test (`.github/scripts/smoke-windows.ps1`) waits for a window titled `EasyHDR`
-  (`ui/main.slint`) and for the log line `Starting GUI event loop` (`src/main.rs`) in
-  `EasyHDR/app.log`. Renaming either one fails CI.
 
 ## Adding a user preference
 

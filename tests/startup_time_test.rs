@@ -1,7 +1,6 @@
 //! Startup profiler unit tests.
 //!
-//! These simulated timings test the profiler, not application startup. The native
-//! Windows CI smoke launches the release executable and checks its GUI event loop.
+//! These simulated timings test the profiler, not application startup.
 
 use easyhdr::utils::startup_profiler::{self, StartupPhase};
 use std::time::Duration;
