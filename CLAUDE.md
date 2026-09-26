@@ -9,7 +9,7 @@ locks. There is no async runtime: `reqwest` uses its `blocking` feature. Don't a
 
 ## Commands
 
-These match CI (`.github/workflows/ci.yml`, `windows-2025`). Always pass `--locked`.
+Run these checks on Windows. Always pass `--locked`.
 
 ```bash
 cargo fmt --all -- --check
@@ -32,7 +32,7 @@ cargo test --locked --doc --release
   stubs, so the real code goes unchecked. To lint the Windows code, run
   `cargo xwin clippy --locked --target x86_64-pc-windows-msvc --all-targets --all-features -- -D warnings`.
   This is what `prek.toml` runs on non-Windows hosts, and it needs cargo-xwin installed.
-- The required Miri job (`.github/workflows/miri.yml`, Linux, pinned nightly) runs
+- For Miri on Linux with nightly Rust, run
   `cargo miri test --locked --lib error -- --test-threads=1`. `error` is a substring filter, so it
   matches every lib test whose path contains "error": all of `error::tests` and the
   `hdr::controller::tests::test_error_handling_*` tests. Keep those tests free of FFI and other
