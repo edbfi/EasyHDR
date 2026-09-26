@@ -117,8 +117,6 @@ Follow the pattern of commit `cbe6cfb` (`auto_open_release_page`):
 
 ## Dependencies and security
 
-- `slint` (`[dependencies]`) and `slint-build` (`[build-dependencies]`) must be the same version.
-  Renovate updates them as one group (`renovate.json`).
 - To ignore a RustSec advisory, add it with a rationale comment to both `deny.toml` and
   `.cargo/audit.toml`. `security.yml` runs both `cargo deny` and `cargo audit`.
 - `fuzz/` is a separate crate (nightly, cargo-fuzz) that uses the library's public API. No CI job
@@ -129,9 +127,6 @@ Follow the pattern of commit `cbe6cfb` (`auto_open_release_page`):
 - `prek.toml` blocks commits to `main` (`no-commit-to-branch`), so work on a branch.
 - The CI hygiene job runs prek's built-in hooks across all files, including trailing whitespace,
   end-of-file and LF line endings.
-- PRs need a Conventional Commit title and a `Signed-off-by` trailer that matches the author.
-  `CI.md` covers the merge and Renovate policy; read it before changing workflows or dependency
-  automation.
 
 ## Reference rules
 
