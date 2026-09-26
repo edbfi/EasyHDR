@@ -20,10 +20,10 @@ cargo test --locked --test integration_tests --release -- --test-threads=1
 cargo test --locked --doc --release
 ```
 
-- CI runs each of these `tests/` files on its own with `--test-threads=1`: `integration_tests`,
+- Run each of these `tests/` files on its own with `--test-threads=1`: `integration_tests`,
   `version_detection_tests`, `memory_usage_test`, `startup_time_test`, `cpu_usage_test`,
-  `icon_cache_tests`. Don't expect CI to catch failures in `uwp_process_detection_tests` (it needs
-  a desktop that can launch Calculator), `cpu_profiling_test` or `dhat_profiling_test`
+  `icon_cache_tests`. Not in that list: `uwp_process_detection_tests` (it needs
+  a desktop that can launch Calculator), `cpu_profiling_test` and `dhat_profiling_test`
   (`profiling.yml` runs those two).
 - To run one test case:
   `cargo test --locked --lib config::models::tests::test_backward_compatible_deserialization -- --exact`
@@ -122,8 +122,8 @@ Follow the pattern of commit `cbe6cfb` (`auto_open_release_page`):
 ## Git and PRs
 
 - `prek.toml` blocks commits to `main` (`no-commit-to-branch`), so work on a branch.
-- The CI hygiene job runs prek's built-in hooks across all files, including trailing whitespace,
-  end-of-file and LF line endings.
+- prek's built-in hooks include trailing whitespace, end-of-file and LF line endings. Run
+  `prek run --all-files` to check every file.
 
 ## Reference rules
 
