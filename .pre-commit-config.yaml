@@ -81,7 +81,8 @@ repos:
       # Also manual, so CI (Windows) runs it.
       - id: cargo-test
         name: cargo test
-        entry: bash -c 'if [ "$OS" = "Windows_NT" ]; then cargo test --locked --lib; else cargo xwin check --locked --lib --target x86_64-pc-windows-msvc; fi'
+        # One thread: the autostart tests share the HKCU Run value and race each other in parallel.
+        entry: bash -c 'if [ "$OS" = "Windows_NT" ]; then cargo test --locked --lib -- --test-threads=1; else cargo xwin check --locked --lib --target x86_64-pc-windows-msvc; fi'
         language: system
         pass_filenames: false
         stages: [pre-push, manual]
