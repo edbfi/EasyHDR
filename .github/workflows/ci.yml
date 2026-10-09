@@ -36,6 +36,8 @@ jobs:
       - run: rustup show active-toolchain
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       # Sequential: the Windows APIs under test share global state.
+      # The old CI's list: cpu_profiling_test and dhat_profiling_test are profiling runs, and
+      # uwp_process_detection_tests needs a UWP app (Calculator) installed, which the runner lacks.
       - run: cargo test --locked --release --test integration_tests --test version_detection_tests --test memory_usage_test --test startup_time_test --test cpu_usage_test --test icon_cache_tests -- --test-threads=1
       - run: cargo test --locked --release --doc
   smoke:
