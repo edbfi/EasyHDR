@@ -1,0 +1,85 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copy as .github/workflows/ci.yml; adapt commands, directories and runners to design/repos.md.
+# Allocate a distinct weekly minute during rollout. Every added PR job belongs in ci-ok.
+name: CI
+on:
+  pull_request:
+  push: { branches: [main] }
+  workflow_dispatch:
+  schedule: [{ cron: "38 4 * * 0" }]   # weekly main revalidation; minute unique per repo
+permissions: {}
+concurrency:
+  group: ${{ github.event_name == 'pull_request' && format('ci-pr-{0}-{1}', github.event.pull_request.number, github.event.pull_request.head.sha) || format('ci-{0}', github.sha) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+jobs:
+  checks:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    permissions: { contents: read }
+    steps:
+      # Git for Windows checks out CRLF by default; the line-ending hooks expect the committed LF bytes.
+      - run: git config --global core.autocrlf false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - run: rustup show active-toolchain
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      # Some runner VMs start without HKCU\...\CurrentVersion\Run, which every Windows profile
+      # normally has; the autostart tests (via the cargo-test hook) open it rather than create it.
+      - run: reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Run" /f
+      - uses: j178/prek-action@1382ad72dea72f9d53832f2bcb65b3e87a947204 # v3.0.1
+        with: { extra-args: "--all-files --hook-stage manual" }
+  tests:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    permissions: { contents: read }
+    env: { RUST_BACKTRACE: "1" }
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - run: rustup show active-toolchain
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      # Sequential: the Windows APIs under test share global state.
+      # The old CI's list: cpu_profiling_test and dhat_profiling_test are profiling runs, and
+      # uwp_process_detection_tests needs a UWP app (Calculator) installed, which the runner lacks.
+      - run: cargo test --locked --release --test integration_tests --test version_detection_tests --test memory_usage_test --test startup_time_test --test cpu_usage_test --test icon_cache_tests -- --test-threads=1
+      - run: cargo test --locked --release --doc
+  smoke:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    permissions: { contents: read }
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - run: rustup show active-toolchain
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - run: ./scripts/smoke-windows.ps1
+  deny:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions: { contents: read }
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - run: rustup show active-toolchain
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - run: cargo install --locked cargo-deny
+      - run: cargo deny --locked check
+      # On Linux, Slint's font stack (yeslogic-fontconfig-sys) probes fontconfig through pkg-config.
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libfontconfig1-dev
+      - run: cargo check --locked --manifest-path fuzz/Cargo.toml
+  ci-ok:
+    if: always()
+    needs: [checks, tests, smoke, deny]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - env:
+          NEEDS: ${{ toJSON(needs) }}
+          ALLOWED_SKIPS: ""
+        run: |
+          jq -e --arg skips "$ALLOWED_SKIPS" '
+            ($skips | split(",") | map(select(. != ""))) as $allowed
+            | length > 0 and all(to_entries[]; .value.result == "success"
+                or (.value.result == "skipped" and (.key | IN($allowed[]))))
+          ' <<<"$NEEDS" >/dev/null || { echo "::error::ci-ok failed: $(jq -c 'map_values(.result)' <<<"$NEEDS")"; exit 1; }
