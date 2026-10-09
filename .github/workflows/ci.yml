@@ -23,6 +23,9 @@ jobs:
         with: { persist-credentials: false }
       - run: rustup show active-toolchain
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      # Some runner VMs start without HKCU\...\CurrentVersion\Run, which every Windows profile
+      # normally has; the autostart tests (via the cargo-test hook) open it rather than create it.
+      - run: reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Run" /f
       - uses: j178/prek-action@1382ad72dea72f9d53832f2bcb65b3e87a947204 # v3.0.1
         with: { extra-args: "--all-files --hook-stage manual" }
   tests:
