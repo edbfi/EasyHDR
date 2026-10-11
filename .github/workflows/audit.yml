@@ -1,0 +1,31 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Nightly RustSec audit (edbfi-ci design/d8.md rule 4): advisories change without a
+# commit, so both lockfiles (the Dependabot cargo directories) are checked every night.
+# ci.yml's deny job runs the full cargo-deny check on PRs and pushes.
+name: Audit
+on:
+  schedule: [{ cron: "23 3 * * *" }]
+  workflow_dispatch:
+permissions: {}
+concurrency:
+  group: audit-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  audit:
+    strategy:
+      fail-fast: false
+      matrix:
+        directory: [".", fuzz]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions: { contents: read }
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - run: rustup show active-toolchain
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - run: cargo install --locked cargo-deny
+      # cargo-deny reads ./deny.toml, so its advisory exceptions apply to both lockfiles.
+      - env:
+          DIRECTORY: ${{ matrix.directory }}
+        run: cargo deny --locked --manifest-path "$DIRECTORY/Cargo.toml" check advisories

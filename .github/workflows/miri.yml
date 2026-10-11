@@ -1,0 +1,32 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Miri over the error module's tests (edbfi-ci design/d8.md rule 5): weekly and on
+# dispatch, outside the required checks. The rest of the crate calls Windows APIs or
+# Slint, which Miri can't run. Miri needs nightly, pinned here; bump it by hand.
+name: Miri
+on:
+  schedule: [{ cron: "53 3 * * 1" }]
+  workflow_dispatch:
+permissions: {}
+concurrency:
+  group: miri-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  miri:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions: { contents: read }
+    env:
+      TOOLCHAIN: nightly-2026-09-26
+      MIRIFLAGS: -Zmiri-strict-provenance -Zmiri-symbolic-alignment-check
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      # On Linux, Slint's font stack (yeslogic-fontconfig-sys) probes fontconfig through pkg-config.
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libfontconfig1-dev
+      - run: rustup toolchain install "$TOOLCHAIN" --profile minimal --component miri,rust-src
+      - run: cargo "+$TOOLCHAIN" miri setup
+      # A filter that matches nothing passes, so require the tests to have run.
+      - run: |
+          set -euo pipefail
+          cargo "+$TOOLCHAIN" miri test --locked --lib -- error::tests:: --test-threads=1 | tee "$RUNNER_TEMP/miri.log"
+          grep -Eq '^test result: ok\. [1-9][0-9]* passed' "$RUNNER_TEMP/miri.log"
