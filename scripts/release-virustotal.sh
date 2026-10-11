@@ -105,7 +105,7 @@ scan() {
     fi
     status="$(jq -r '.data.attributes.status | strings' "$response" | tr -cd 'a-z-')" || status=""
     if [[ "$status" == completed ]]; then
-      jq -e --arg sha "$sha" '(.meta.file_info.sha256 // $sha) == $sha' "$response" >/dev/null ||
+      jq -e --arg sha "$sha" '.meta.file_info.sha256 == $sha' "$response" >/dev/null ||
         die "VirusTotal analysed a different file"
       stats="$(jq -r '.data.attributes.stats
         | "\(.malicious // 0 | tonumber) malicious, \(.suspicious // 0 | tonumber) suspicious, \(.undetected // 0 | tonumber) undetected"' "$response")" ||
