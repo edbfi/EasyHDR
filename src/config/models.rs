@@ -1109,7 +1109,7 @@ mod tests {
         assert_eq!(app.process_name, expected_process_name);
         assert_eq!(app.exe_path, current_exe);
         assert!(app.enabled); // Should default to enabled
-        assert!(!app.display_name.is_empty()); // Should have a display name
+        assert_ne!(app.display_name, ""); // Should have a display name
     }
 
     #[test]
@@ -1267,8 +1267,8 @@ mod tests {
         let app = result.unwrap();
 
         // Should have basic metadata
-        assert!(!app.display_name.is_empty());
-        assert!(!app.process_name.is_empty());
+        assert_ne!(app.display_name, "");
+        assert_ne!(app.process_name, "");
         assert_eq!(app.exe_path, current_exe);
     }
 
