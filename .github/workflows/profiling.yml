@@ -1,0 +1,85 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Performance profiling (edbfi-ci design/d8.md rule 6): manual dispatch only; every
+# selected job uploads its results as an artifact.
+#   benchmarks  Criterion benches (target/criterion)
+#   cpu         flamegraph of tests/cpu_profiling_test.rs (blondie/ETW backend)
+#   allocation  DHAT heap profile of tests/dhat_profiling_test.rs (view at
+#               https://nnethercote.github.io/dh_view/dh_view.html)
+name: Profiling
+on:
+  workflow_dispatch:
+    inputs:
+      benchmarks: { description: Criterion benchmarks, type: boolean, default: true }
+      cpu: { description: CPU flamegraph, type: boolean, default: true }
+      allocation: { description: DHAT allocation profile, type: boolean, default: true }
+permissions: {}
+concurrency:
+  group: profiling-${{ github.ref }}
+  cancel-in-progress: false
+env:
+  RUST_BACKTRACE: "1"
+  RUSTFLAGS: -C force-frame-pointers=yes
+jobs:
+  benchmarks:
+    if: inputs.benchmarks
+    runs-on: windows-latest
+    timeout-minutes: 60
+    permissions: { contents: read }
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - run: rustup show active-toolchain
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - run: cargo bench --locked -- --save-baseline ci
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: criterion-${{ github.sha }}
+          path: target/criterion/
+          retention-days: 30
+          if-no-files-found: error
+
+  cpu:
+    if: inputs.cpu
+    runs-on: windows-latest
+    timeout-minutes: 60
+    permissions: { contents: read }
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - run: rustup show active-toolchain
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - run: cargo install --locked flamegraph --version 0.6.14
+      # The runner's dtrace collects no stacks; a missing DTRACE makes cargo-flamegraph use blondie (ETW).
+      - env: { DTRACE: dtrace-disabled }
+        run: |
+          New-Item -ItemType Directory -Force -Path profiling | Out-Null
+          cargo flamegraph --profile profiling --test cpu_profiling_test --output profiling/cpu-flamegraph.svg -- --exact --nocapture profile_process_monitoring_hot_paths
+          if ($LASTEXITCODE -ne 0) { throw "cargo flamegraph failed (exit $LASTEXITCODE)." }
+          # An empty flamegraph is about 0.6 KB.
+          $size = (Get-Item profiling/cpu-flamegraph.svg).Length
+          if ($size -le 1KB) { throw "The flamegraph is empty ($size bytes): no samples were collected." }
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: cpu-flamegraph-${{ github.sha }}
+          path: profiling/cpu-flamegraph.svg
+          retention-days: 30
+          if-no-files-found: error
+
+  allocation:
+    if: inputs.allocation
+    runs-on: windows-latest
+    timeout-minutes: 60
+    permissions: { contents: read }
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - run: rustup show active-toolchain
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      # Writes dhat-heap.json when the profiler drops at the end of the test.
+      - run: cargo test --locked --release --test dhat_profiling_test -- profile_production_allocation_patterns --exact --nocapture
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: dhat-heap-${{ github.sha }}
+          path: dhat-heap.json
+          retention-days: 30
+          if-no-files-found: error
