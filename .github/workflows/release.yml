@@ -1,0 +1,132 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Release automation (edbfi-ci design/d8.md rules 2-3). On a published release:
+#   verify   (unprivileged) the tag's commit must be on main, before any build;
+#   build    (unprivileged, Windows) builds and smoke-tests the release .exe;
+#   publish  (privileged: VT_API_KEY, contents: write; shell only, no actions) takes the
+#            .exe in, submits it to VirusTotal and attaches it and the report links.
+# A failed publish is retried with "Re-run failed jobs": it reuses the built artifact,
+# replaces the asset and the report block, and resubmits the same file.
+name: Release
+on:
+  release:
+    types: [published]
+permissions: {}
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: { contents: read }
+    steps:
+      - name: Require the tag's commit on main
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          set -euo pipefail
+          # The tag must still point at the event's commit.
+          tagged="$(gh api "repos/$GH_REPO/commits/refs/tags/$(jq -rn --arg t "$TAG" '$t | @uri')" --jq .sha)"
+          if [[ "$tagged" != "$GITHUB_SHA" ]]; then
+            echo "::error::Tag $TAG points at '$tagged', not the released commit $GITHUB_SHA"
+            exit 1
+          fi
+          # compare/<commit>...main is "ahead" or "identical" only when main contains the commit.
+          status="$(gh api "repos/$GH_REPO/compare/$GITHUB_SHA...main" --jq .status)"
+          if [[ "$status" != ahead && "$status" != identical ]]; then
+            echo "::error::$GITHUB_SHA is not reachable from main (compare status: $status)"
+            exit 1
+          fi
+          echo "$TAG ($GITHUB_SHA) is on main"
+
+  build:
+    needs: verify
+    runs-on: windows-latest
+    timeout-minutes: 60
+    permissions: { contents: read }
+    outputs:
+      artifact: ${{ steps.check.outputs.artifact }}
+      sha256: ${{ steps.check.outputs.sha256 }}
+    env:
+      # Portable x86-64 baseline: 0.1.14 crashed on CPUs without the build host's extensions.
+      RUSTFLAGS: -C target-cpu=x86-64
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - run: rustup show active-toolchain
+      # No build cache in a release (zizmor cache-poisoning). The smoke script builds the
+      # release executable with --locked and launches it with disposable state.
+      - run: ./scripts/smoke-windows.ps1
+      - id: check
+        env:
+          ARTIFACT: easyhdr-exe-${{ github.run_attempt }}
+        run: |
+          $exe = "target/release/easyhdr.exe"
+          $bytes = [IO.File]::ReadAllBytes((Resolve-Path $exe))
+          if ($bytes.Length -lt 2 -or $bytes[0] -ne 0x4D -or $bytes[1] -ne 0x5A) { throw "$exe is not a PE executable." }
+          $sha = (Get-FileHash -Algorithm SHA256 $exe).Hash.ToLowerInvariant()
+          Write-Output "easyhdr.exe: $($bytes.Length) bytes, sha256 $sha"
+          "artifact=$env:ARTIFACT" >> $env:GITHUB_OUTPUT
+          "sha256=$sha" >> $env:GITHUB_OUTPUT
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ${{ steps.check.outputs.artifact }}
+          path: target/release/easyhdr.exe
+          retention-days: 7
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions: { contents: write, actions: read }
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      TAG: ${{ github.event.release.tag_name }}
+    steps:
+      - name: Take the executable in
+        env:
+          ARTIFACT: ${{ needs.build.outputs.artifact }}
+          EXPECTED_SHA256: ${{ needs.build.outputs.sha256 }}
+        run: |
+          set -euo pipefail
+          [[ "$ARTIFACT" =~ ^easyhdr-exe-[0-9]+$ && "$EXPECTED_SHA256" =~ ^[0-9a-f]{64}$ ]] ||
+            { echo "::error::Malformed build outputs"; exit 1; }
+          # The tag must not have moved since verify.
+          tagged="$(gh api "repos/$GH_REPO/commits/refs/tags/$(jq -rn --arg t "$TAG" '$t | @uri')" --jq .sha)"
+          [[ "$tagged" == "$GITHUB_SHA" ]] || { echo "::error::Tag $TAG moved to '$tagged'"; exit 1; }
+          # security.md rule 5, steps 1-2: a fresh directory, exactly one regular file.
+          dir="$(mktemp -d)"
+          gh run download "$GITHUB_RUN_ID" -n "$ARTIFACT" -D "$dir"
+          mapfile -d '' entries < <(find "$dir" -mindepth 1 -print0)
+          exe="$dir/easyhdr.exe"
+          if [[ ${#entries[@]} -ne 1 || "${entries[0]}" != "$exe" || -L "$exe" || ! -f "$exe" ]]; then
+            echo "::error::The artifact must hold exactly one regular file, easyhdr.exe"
+            exit 1
+          fi
+          [[ "$(head -c 2 "$exe")" == MZ ]] || { echo "::error::easyhdr.exe is not a PE executable"; exit 1; }
+          actual="$(sha256sum "$exe" | cut -d' ' -f1)"
+          [[ "$actual" == "$EXPECTED_SHA256" ]] || { echo "::error::sha256 $actual, build reported $EXPECTED_SHA256"; exit 1; }
+          # The VirusTotal script comes from the released commit, which verify found on main.
+          gh api -H 'Accept: application/vnd.github.raw' \
+            "repos/$GH_REPO/contents/scripts/release-virustotal.sh?ref=$GITHUB_SHA" > "$RUNNER_TEMP/release-virustotal.sh"
+          echo "EXE=$exe" >> "$GITHUB_ENV"
+      - name: Submit to VirusTotal
+        env:
+          VT_API_KEY: ${{ secrets.VT_API_KEY }}
+        run: |
+          set -euo pipefail
+          bash "$RUNNER_TEMP/release-virustotal.sh" scan "$EXE" "$RUNNER_TEMP/virustotal.md"
+          cat "$RUNNER_TEMP/virustotal.md" >> "$GITHUB_STEP_SUMMARY"
+      - name: Attach the executable and the report links
+        run: |
+          set -euo pipefail
+          gh release upload "$TAG" "$EXE" --clobber
+          gh release view "$TAG" --json body > "$RUNNER_TEMP/release.json"
+          bash "$RUNNER_TEMP/release-virustotal.sh" notes "$RUNNER_TEMP/release.json" "$RUNNER_TEMP/virustotal.md" "$RUNNER_TEMP/notes.md"
+          gh release edit "$TAG" --notes-file "$RUNNER_TEMP/notes.md"
