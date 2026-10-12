@@ -3,6 +3,7 @@ name = "easyhdr-fuzz"
 version = "0.0.0"
 publish = false
 edition = "2024"
+license = "AGPL-3.0-only"
 
 [package.metadata]
 cargo-fuzz = true
@@ -34,6 +35,3 @@ path = "fuzz_targets/fuzz_windows_api.rs"
 test = false
 doc = false
 bench = false
-
-[profile.release]
-debug = 1
