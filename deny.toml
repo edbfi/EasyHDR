@@ -8,132 +8,18 @@ version = 2
 unmaintained = "all"
 # Ignore specific advisories (add IDs here if needed)
 ignore = [
-    # GTK3 bindings - unmaintained but only used on Linux (not Windows target)
-    "RUSTSEC-2024-0412", # gdk
-    "RUSTSEC-2024-0413", # atk
-    "RUSTSEC-2024-0415", # gtk
-    "RUSTSEC-2024-0416", # atk-sys
-    "RUSTSEC-2024-0418", # gdk-sys
-    "RUSTSEC-2024-0419", # gtk3-macros
-    "RUSTSEC-2024-0420", # gtk-sys
-    # glib unsoundness - fixed in 0.20.0 but GTK3 deps pin to 0.18.x
-    "RUSTSEC-2024-0429", # glib
-    # paste - unmaintained but widely used, no security issues
-    "RUSTSEC-2024-0436", # paste
     # proc-macro-error - unmaintained but only used at build time
     "RUSTSEC-2024-0370", # proc-macro-error
-    # bincode - unmaintained but only used as transitive dependency from Slint compiler
-    # EasyHDR does not use bincode directly; all serialization uses serde_json
-    "RUSTSEC-2025-0141", # bincode
-    # quinn-proto - optional transitive dependency from reqwest, not compiled.
-    # EasyHDR uses reqwest for HTTPS update checks (blocking client, features=["blocking","json","rustls"]),
-    # but does NOT enable the "http3" feature, so quinn/QUIC code is never compiled.
-    # Confirmed: `cargo tree -i quinn-proto --target all` shows "nothing to print".
-    "RUSTSEC-2026-0037", # quinn-proto
-
-    # AWS-LC advisories - transitive dependency via reqwest → rustls → aws-lc-rs 1.15.2.
-    # EasyHDR only makes outbound HTTPS GET requests to api.github.com for update checks.
-
-    # AES-CCM timing side-channel - not exploitable in EasyHDR.
-    # TLS 1.3 (used by rustls) negotiates AES-GCM or ChaCha20-Poly1305, never AES-CCM.
-    # AES-CCM is used in DTLS, CoAP, Bluetooth LE — none of which EasyHDR uses.
-    "RUSTSEC-2026-0045", # aws-lc-rs: Timing Side-Channel in AES-CCM Tag Verification
-
-    # X.509 Name Constraints bypass via Wildcard/Unicode CN - negligible risk in EasyHDR.
-    # While X.509 validation does run during the TLS handshake, exploitation requires:
-    # (1) a compromised intermediate CA with name constraints, (2) a MITM attack against
-    # api.github.com, and (3) the attacker crafting a wildcard/Unicode CN to bypass constraints.
-    # The only consequence would be a fake update-check response — no code execution or data leak.
-    # DigiCert's certs for api.github.com do not use restrictive name constraints.
-    "RUSTSEC-2026-0044", # aws-lc-rs: X.509 Name Constraints Bypass via Wildcard/Unicode CN
-
-    # PKCS7_verify vulnerabilities - not exploitable in EasyHDR.
-    # EasyHDR never calls PKCS7_verify. PKCS#7 is used for S/MIME, code signing, and CMS —
-    # none of which apply here. TLS certificate validation uses X.509 DER via rustls-webpki.
-    "RUSTSEC-2026-0046", # aws-lc-rs: PKCS7_verify Certificate Chain Validation Bypass
-    "RUSTSEC-2026-0047", # aws-lc-rs: PKCS7_verify Signature Validation Bypass
-
-    # CRL Distribution Point scope check error - not exploitable in EasyHDR.
-    # rustls does not enable CRL checking by default; it must be explicitly configured.
-    # EasyHDR's reqwest client uses no CRL/revocation APIs. On Windows, rustls-platform-verifier
-    # delegates to SChannel (OS verifier), bypassing aws-lc-rs CRL logic entirely.
-    "RUSTSEC-2026-0048", # aws-lc-rs: CRL Distribution Point Scope Check Logic Error
-
-    # rustls-webpki CRL Distribution Point matching bug - not exploitable in EasyHDR.
-    # CRL checking is not configured in the reqwest client (no CRL/revocation APIs used).
-    # On Windows, rustls-platform-verifier delegates to SChannel (OS verifier), bypassing
-    # rustls-webpki's CRL distribution point logic entirely. The only HTTPS connection is
-    # to api.github.com for update checks; no sensitive data or code execution is at risk.
-    "RUSTSEC-2026-0049", # rustls-webpki: CRL Distribution Point faulty matching logic
-
-    # tar-rs vulnerabilities - not exploitable in EasyHDR.
-    # tar 0.4.44 is a build-time-only transitive dependency pulled in exclusively by
-    # skia-bindings's build script (slint → skia-safe → skia-bindings [build]). It extracts
-    # pre-built Skia binary archives during `cargo build` only. The tar crate is never compiled
-    # into the final easyhdr binary. `cargo tree -i tar -p easyhdr` confirms it is absent from
-    # the runtime dependency graph. EasyHDR does not process tar archives at runtime.
-    "RUSTSEC-2026-0067", # tar-rs: unpack_in can chmod arbitrary directories via symlinks
-    "RUSTSEC-2026-0068", # tar-rs: incorrectly ignores PAX size headers
-
-    # quinn-proto (newer advisory) - same justification as RUSTSEC-2026-0037 above.
-    # quinn-proto 0.11.13 reaches Cargo.lock only because reqwest-rustls pulls it in as an
-    # optional QUIC/HTTP3 transport. EasyHDR's reqwest is configured with
-    # `default-features = false` and only `["blocking", "json", "rustls"]` features, so the
-    # http3/QUIC code path is never compiled. `cargo tree --target x86_64-pc-windows-msvc
-    # -i quinn-proto` reports "nothing to print"; ditto for `--target all`. Like the existing
-    # 0037 ignore, this is a transitive-locked dep whose vulnerable code path is not built.
-    "RUSTSEC-2026-0185", # quinn-proto: remote memory exhaustion from unbounded out-of-order stream reassembly
-
-    # memmap2 0.9.8 - vulnerable APIs unreachable from EasyHDR.
-    # The advisory affects `Mmap::[unchecked_]advise_range`, `MmapMut::[unchecked_]advise_range`,
-    # and `MmapMut::flush[_async]_range`. The only transitive use of memmap2 reachable from
-    # easyhdr is `fontique 0.6.0 → memmap2 0.9.8`, which calls only `memmap2::Mmap::map(&file)`
-    # in `src/{font,scan,source_cache}.rs` - never any of the vulnerable range functions.
-    # On Windows MSVC (the only supported target), fontique's font discovery backend is
-    # DirectWrite (src/backend/dwrite.rs) and does not touch memmap2 at all. Bumping slint's
-    # pinned fontique version to one that updates memmap2 is an upstream-only change; no
-    # EasyHDR-side action can move this. Evidence: grep against fontique 0.6.0 sources in
-    # the cargo registry cache.
-    "RUSTSEC-2026-0186", # memmap2: unchecked pointer offset in advise/flush range APIs
 
     # ttf-parser - unmaintained (status: unmaintained, not an active vulnerability).
-    # Reachable transitively from slint (1.14.1) via:
-    #   * femtovg -> ttf-parser 0.25.1 (slint's default FemtoVG renderer code path)
-    #   * fontdb -> ttf-parser 0.25.1 (slint's font database)
-    #   * rustybuzz -> ttf-parser 0.25.1 (text shaping used by slint)
-    #   * fontdue -> ttf-parser 0.21.1 (slint-build / i-slint-compiler at build time)
-    # The advisory's suggested replacement is `skrifa`; substituting it requires coordinated
-    # changes across slint and its text-stack crates, which EasyHDR cannot do unilaterally.
-    # Tracking the upstream migration is the only viable action; ttf-parser has no CVE-class
-    # vulnerability today, so the immediate security risk is nil.
+    # Since slint 1.18 it is reachable only on Linux: ttf-parser 0.25.1 <- owned_ttf_parser
+    # <- ab_glyph <- sctk-adwaita (Wayland window decorations) <- winit <-
+    # i-slint-backend-winit. `cargo tree -i ttf-parser --target x86_64-pc-windows-msvc`
+    # reports "nothing to print", so the shipped target never builds it; cargo-deny reports
+    # on Cargo.lock without target awareness, so the ignore stays. The advisory's suggested
+    # replacement is `skrifa`, which sctk-adwaita would have to adopt first. ttf-parser has
+    # no CVE-class vulnerability today, so the immediate security risk is nil.
     "RUSTSEC-2026-0192", # ttf-parser: crate is unmaintained by upstream (harfbuzz/ttf-parser#217)
-
-    # quick-xml - vulnerable versions still pinned by Linux-only transitive deps.
-    # EasyHDR is Windows-only (MIN_WINDOWS_BUILD = 19044 per src/main.rs); on the shipped
-    # target x86_64-pc-windows-msvc, both quick-xml versions are unwound from the build
-    # because tauri-winrt-notification 0.7 -> 0.8 dropped its XML parsing. `cargo tree
-    # -i quick-xml@0.37.5 --target x86_64-pc-windows-msvc` and same for 0.36.2 both report
-    # "nothing to print". On Linux dev/CI targets the warnings remain reachable as
-    # proc-macro dependencies of the slint toolchain (wayland-scanner -> quick-xml 0.37.5;
-    # zbus_xml -> quick-xml 0.36.2 via accesskit/atspi). cargo-deny reports on Cargo.lock
-    # without target awareness, so we ignore the Linux-only entries with the Windows
-    # non-reachability rationale. Upstream bump to quick-xml >=0.41.0 requires the slint
-    # project's Wl/atspi/zbus-crate stack to move first.
-    "RUSTSEC-2026-0194", # quick-xml: quadratic run time on duplicate-attribute-name check
-    "RUSTSEC-2026-0195", # quick-xml: unbounded namespace-declaration allocation in NsReader
-
-    # rustybuzz - unmaintained (status: unmaintained, not an active vulnerability).
-    # Upstream declared the crate unmaintained on 2026-07-11 and published no patched
-    # release (`patched = []`), so there is no version to upgrade to. It is reachable only
-    # through the Slint text stack: rustybuzz 0.20.1 <- usvg 0.45.1 <- resvg 0.45.1 <-
-    # i-slint-compiler (build time, via slint-build and slint-macros) and i-slint-core
-    # (runtime). Confirmed with `cargo tree -i rustybuzz --target x86_64-pc-windows-msvc`,
-    # which shows both paths on the shipped target. The advisory's suggested replacement is
-    # `harfrust`; adopting it requires resvg and slint to migrate first, which EasyHDR cannot
-    # do unilaterally. This is the same upstream text stack as RUSTSEC-2026-0192 (ttf-parser)
-    # above, whose rationale already lists rustybuzz as one of its consumers. There is no
-    # CVE-class vulnerability today, so the immediate security risk is nil.
-    "RUSTSEC-2026-0206", # rustybuzz: crate is unmaintained by upstream (harfbuzz/rustybuzz#166)
 ] # end of advisories.ignore
 
 [licenses]
