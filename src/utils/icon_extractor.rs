@@ -557,7 +557,7 @@ mod tests {
         let result = extract_display_name_from_exe(&path);
         assert!(result.is_ok());
         let name = result.unwrap();
-        assert!(!name.is_empty());
+        assert_ne!(name, "");
     }
 
     #[test]

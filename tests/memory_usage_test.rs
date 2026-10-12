@@ -125,15 +125,9 @@ fn test_memory_stats_within_limits() {
     };
 
     assert!(stats.is_within_limits());
-    // Allow exact float comparison: values are constructed to be exact multiples
-    #[expect(
-        clippy::float_cmp,
-        reason = "Values are constructed as exact multiples of 1024*1024, so float comparison is precise"
-    )]
-    {
-        assert_eq!(stats.total_mb(), 40.0);
-        assert_eq!(stats.icon_cache_mb(), 5.0);
-    }
+    // Exact float comparison is precise: values are exact multiples of 1024*1024
+    assert_eq!(stats.total_mb(), 40.0);
+    assert_eq!(stats.icon_cache_mb(), 5.0);
 }
 
 #[test]
@@ -148,14 +142,8 @@ fn test_memory_stats_exceeds_limits() {
     };
 
     assert!(!stats.is_within_limits());
-    // Allow exact float comparison: value is constructed to be exact multiple
-    #[expect(
-        clippy::float_cmp,
-        reason = "Value is constructed as exact multiple of 1024*1024, so float comparison is precise"
-    )]
-    {
-        assert_eq!(stats.total_mb(), 60.0);
-    }
+    // Exact float comparison is precise: the value is an exact multiple of 1024*1024
+    assert_eq!(stats.total_mb(), 60.0);
 }
 
 #[test]
