@@ -1,15 +1,11 @@
 #![no_main]
 
-use libfuzzer_sys::fuzz_target;
 use easyhdr::hdr::windows_api::{
-    DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO,
-    DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO_2,
-    DISPLAYCONFIG_SET_HDR_STATE,
-    DISPLAYCONFIG_SET_ADVANCED_COLOR_STATE,
-    DISPLAYCONFIG_DEVICE_INFO_HEADER,
-    DISPLAYCONFIG_DEVICE_INFO_TYPE,
-    LUID,
+    DISPLAYCONFIG_DEVICE_INFO_HEADER, DISPLAYCONFIG_DEVICE_INFO_TYPE,
+    DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO, DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO_2,
+    DISPLAYCONFIG_SET_ADVANCED_COLOR_STATE, DISPLAYCONFIG_SET_HDR_STATE, LUID,
 };
+use libfuzzer_sys::fuzz_target;
 
 fuzz_target!(|data: &[u8]| {
     // Need at least 4 bytes for u32 value testing
@@ -24,9 +20,13 @@ fuzz_target!(|data: &[u8]| {
     // This tests bit field extraction logic with all possible u32 values
     let info1 = DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO {
         header: DISPLAYCONFIG_DEVICE_INFO_HEADER {
-            type_: DISPLAYCONFIG_DEVICE_INFO_TYPE::DISPLAYCONFIG_DEVICE_INFO_GET_ADVANCED_COLOR_INFO,
+            type_:
+                DISPLAYCONFIG_DEVICE_INFO_TYPE::DISPLAYCONFIG_DEVICE_INFO_GET_ADVANCED_COLOR_INFO,
             size: std::mem::size_of::<DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO>() as u32,
-            adapterId: LUID { LowPart: 0, HighPart: 0 },
+            adapterId: LUID {
+                LowPart: 0,
+                HighPart: 0,
+            },
             id: 0,
         },
         value,
@@ -44,9 +44,13 @@ fuzz_target!(|data: &[u8]| {
     // This is the critical structure with strict field ordering requirements
     let info2 = DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO_2 {
         header: DISPLAYCONFIG_DEVICE_INFO_HEADER {
-            type_: DISPLAYCONFIG_DEVICE_INFO_TYPE::DISPLAYCONFIG_DEVICE_INFO_GET_ADVANCED_COLOR_INFO_2,
+            type_:
+                DISPLAYCONFIG_DEVICE_INFO_TYPE::DISPLAYCONFIG_DEVICE_INFO_GET_ADVANCED_COLOR_INFO_2,
             size: std::mem::size_of::<DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO_2>() as u32,
-            adapterId: LUID { LowPart: 0, HighPart: 0 },
+            adapterId: LUID {
+                LowPart: 0,
+                HighPart: 0,
+            },
             id: 0,
         },
         value,
