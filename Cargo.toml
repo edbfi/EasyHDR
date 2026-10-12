@@ -7,6 +7,13 @@ authors = ["engels74"]
 description = "Automatic HDR management for Windows"
 license = "AGPL-3.0-only"
 
+# fuzz/ shares this workspace and its Cargo.lock, so a dependency bump re-locks the fuzz
+# crate too: Dependabot never re-locks a separate lockfile behind a path dependency
+# (dependabot-core#11500). Plain `cargo` commands at the root still select only easyhdr.
+[workspace]
+members = ["fuzz"]
+default-members = ["."]
+
 [lib]
 name = "easyhdr"
 path = "src/lib.rs"
@@ -120,6 +127,11 @@ lto = true          # Link-time optimization
 codegen-units = 1   # Better optimization
 strip = "symbols"   # Strip symbols
 panic = "abort"     # Smaller binary
+
+# cargo fuzz builds in release; keep symbols and line tables in the fuzz binaries for readable crash traces.
+[profile.release.package.easyhdr-fuzz]
+strip = false
+debug = 1
 
 [profile.dev]
 opt-level = 1       # Some optimization for dev builds

@@ -63,7 +63,8 @@ jobs:
       - run: rustup show active-toolchain
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - run: cargo install --locked cargo-deny
-      - run: cargo deny --locked check
+      # --workspace: without it cargo-deny roots the graph at easyhdr alone and skips fuzz/.
+      - run: cargo deny --locked --workspace check
       # On Linux, Slint's font stack (yeslogic-fontconfig-sys) probes fontconfig through pkg-config.
       - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libfontconfig1-dev
       - run: cargo check --locked --manifest-path fuzz/Cargo.toml
