@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-only
-# Performance profiling (edbfi-ci design/d8.md rule 6): manual dispatch only; every
+# Performance profiling: manual dispatch only; every
 # selected job uploads its results as an artifact.
 #   benchmarks  Criterion benches (target/criterion)
 #   cpu         flamegraph of tests/cpu_profiling_test.rs (blondie/ETW backend)

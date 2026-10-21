@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-only
-# Release automation (edbfi-ci design/d8.md rules 2-3). On a published release:
+# Release automation. On a published release:
 #   verify   (unprivileged) the tag's commit must be on main, before any build;
 #   build    (unprivileged, Windows) builds and smoke-tests the release .exe;
 #   publish  (privileged: VT_API_KEY, contents: write; shell only, no actions) takes the
