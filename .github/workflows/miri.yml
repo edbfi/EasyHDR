@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
-# Miri over the error module's tests (edbfi-ci design/d8.md rule 5): weekly and on
-# dispatch, outside the required checks. The rest of the crate calls Windows APIs or
-# Slint, which Miri can't run. Miri needs nightly, pinned here; bump it by hand.
+# Miri over the error module's tests: weekly and on dispatch, outside the required
+# checks. The rest of the crate calls Windows APIs or Slint, which Miri can't run.
+# Miri needs nightly, pinned here; bump it by hand.
 name: Miri
 on:
   schedule: [{ cron: "53 3 * * 1" }]
