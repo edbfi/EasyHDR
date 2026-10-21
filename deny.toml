@@ -20,6 +20,15 @@ ignore = [
     # replacement is `skrifa`, which sctk-adwaita would have to adopt first. ttf-parser has
     # no CVE-class vulnerability today, so the immediate security risk is nil.
     "RUSTSEC-2026-0192", # ttf-parser: crate is unmaintained by upstream (harfbuzz/ttf-parser#217)
+
+    # zvariant, zvariant_derive and zbus_names - unmaintained (merged into zbus 6, no
+    # vulnerability). Reachable only on Linux: zbus 5 <- accesskit_unix / atspi <-
+    # i-slint-backend-winit, and ksni; `cargo tree -i zvariant --target x86_64-pc-windows-msvc`
+    # prints nothing. Drop these once slint's accessibility stack moves to zbus 6
+    # (z-galaxy/zbus#2043).
+    "RUSTSEC-2026-0370", # zvariant
+    "RUSTSEC-2026-0371", # zbus_names
+    "RUSTSEC-2026-0372", # zvariant_derive
 ] # end of advisories.ignore
 
 [licenses]
