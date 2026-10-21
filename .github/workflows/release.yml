@@ -100,7 +100,7 @@ jobs:
           # The tag must not have moved since verify.
           tagged="$(gh api "repos/$GH_REPO/commits/refs/tags/$(jq -rn --arg t "$TAG" '$t | @uri')" --jq .sha)"
           [[ "$tagged" == "$GITHUB_SHA" ]] || { echo "::error::Tag $TAG moved to '$tagged'"; exit 1; }
-          # security.md rule 5, steps 1-2: a fresh directory, exactly one regular file.
+          # Artifact intake (edbfi-ci's privileged_jobs.py): a fresh directory, exactly one regular file.
           dir="$(mktemp -d)"
           gh run download "$GITHUB_RUN_ID" -n "$ARTIFACT" -D "$dir"
           mapfile -d '' entries < <(find "$dir" -mindepth 1 -print0)
