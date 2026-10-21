@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
-# Nightly RustSec audit: advisories change without a
-# commit, so the workspace lockfile is checked every night. --workspace roots the graph
-# at every member, so the fuzz crate's dependencies are covered as well.
+# Nightly RustSec audit: advisories change without a commit, so the workspace
+# lockfile is checked every night. --workspace roots the graph at every member,
+# so the fuzz crate's dependencies are covered as well.
 # ci.yml's deny job runs the full cargo-deny check on PRs and pushes.
 name: Audit
 on:
