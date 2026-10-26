@@ -2,7 +2,8 @@
 # Nightly RustSec audit: advisories change without a commit, so the workspace
 # lockfile is checked every night. --workspace roots the graph at every member,
 # so the fuzz crate's dependencies are covered as well.
-# ci.yml's deny job runs the full cargo-deny check on PRs and pushes.
+# ci.yml's deny job runs bans, licenses and sources on PRs; its audit job runs advisories
+# on main pushes and weekly, so a new advisory never fails a PR.
 name: Audit
 on:
   schedule: [{ cron: "23 3 * * *" }]
