@@ -7,7 +7,7 @@ on:
   pull_request:
   push: { branches: [main] }
   workflow_dispatch:
-  schedule: [{ cron: "38 4 * * 0" }]   # weekly main revalidation; minute unique per repo
+  schedule: [{ cron: "38 4 * * 0" }]   # weekly audit + main revalidation; minute unique per repo
 permissions: {}
 concurrency:
   group: ${{ github.event_name == 'pull_request' && format('ci-pr-{0}-{1}', github.event.pull_request.number, github.event.pull_request.head.sha) || format('ci-{0}', github.sha) }}
@@ -65,7 +65,8 @@ jobs:
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
       - run: cargo install --locked cargo-deny
       # --workspace: without it cargo-deny roots the graph at easyhdr alone and skips fuzz/.
-      - run: cargo deny --locked --workspace check
+      # Advisories run off-PR (audit job): a new RustSec advisory must not turn unrelated PRs red.
+      - run: cargo deny --locked --workspace check bans licenses sources
       # On Linux, Slint's font stack (yeslogic-fontconfig-sys) probes fontconfig through pkg-config.
       - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libfontconfig1-dev
       - run: cargo check --locked --manifest-path fuzz/Cargo.toml
@@ -85,3 +86,15 @@ jobs:
             | length > 0 and all(to_entries[]; .value.result == "success"
                 or (.value.result == "skipped" and (.key | IN($allowed[]))))
           ' <<<"$NEEDS" >/dev/null || { echo "::error::ci-ok failed: $(jq -c 'map_values(.result)' <<<"$NEEDS")"; exit 1; }
+  audit:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions: { contents: read }
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - run: rustup show active-toolchain
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - run: cargo install --locked cargo-deny
+      - run: cargo deny --locked --workspace check advisories
