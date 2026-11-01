@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: AGPL-3.0-only
-# VirusTotal report for a release executable, run by the privileged `publish` job in
-# .github/workflows/release.yml. Needs only bash, coreutils, curl and jq.
+# Copy as scripts/release-virustotal.sh. Privileged jobs that publish an asset run it:
+# release.yml `publish` (EasyHDR, game-mods) and nightly.yml `scan` (game-mods).
+# VirusTotal report for a release asset. Needs only bash, coreutils, curl and jq.
 #
 #   scan <file> <block.md>           submit <file> (VT_API_KEY) and write the report block
 #   notes <release.json> <block.md> <out>
@@ -70,7 +71,7 @@ scan() {
   [[ -n "${VT_API_KEY:-}" ]] || die "VT_API_KEY is not set"
   name="$(basename "$file")"
   [[ "$name" =~ ^[A-Za-z0-9._-]+$ ]] || die "unexpected file name"
-  size="$(stat -c %s "$file")"
+  size="$(($(wc -c <"$file")))"
   ((size > 0 && size <= LIMIT)) || die "$name is $size bytes; VirusTotal accepts 1 to $LIMIT"
   sha="$(sha256sum "$file" | cut -d' ' -f1)"
 
@@ -135,11 +136,14 @@ notes() {
   jq -nj --slurpfile release "$release" --rawfile block "$block" --arg start "$START" --arg end "$END" '
     ($release[0].body // "") as $body
     | ($block | rtrimstr("\n")) as $b
-    | ($body | split($start)) as $head
-    | if ($head | length) == 2 and (($head[1] | split($end)) | length) == 2
-      then $head[0] + $b + ($head[1] | split($end))[1]
-      elif ($body | gsub("\\s+"; "") | length) == 0 then $b + "\n"
-      elif ($head | length) == 1 then ($body | rtrimstr("\n")) + "\n\n" + $b + "\n"
+    | ($body | indices($start) | length) as $ns
+    | ($body | indices($end) | length) as $ne
+    # Replace exactly one start-then-end pair, append when there is none, refuse anything else.
+    | if $ns == 1 and $ne == 1 and ($body | index($start)) < ($body | index($end))
+      then ($body | split($start)) as $h | $h[0] + $b + ($h[1] | split($end))[1]
+      elif $ns == 0 and $ne == 0 then
+        (if ($body | gsub("\\s+"; "") | length) == 0 then $b + "\n"
+        else ($body | rtrimstr("\n")) + "\n\n" + $b + "\n" end)
       else error("the release body has unmatched VirusTotal markers") end
   ' >"$out"
 }
