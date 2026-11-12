@@ -1,14 +1,21 @@
-# EasyHDR
+<p align="center">
+  <img src="assets/svg/easyhdr-logo.svg" alt="EasyHDR logo" width="256" height="256">
+</p>
+
+<h1 align="center">EasyHDR</h1>
 
 <p align="center">
-  <img src="assets/svg/easyhdr-logo.svg" alt="qbittorrent" style="width: 40%;"/>
+  <strong>Automatically enable HDR for selected Windows applications.</strong>
 </p>
 
 <p align="center">
-  <a href="https://github.com/edbfi/EasyHDR/releases"><img src="https://img.shields.io/github/v/tag/edbfi/EasyHDR?sort=semver" alt="GitHub tag (SemVer)"></a>
-  <a href="https://github.com/edbfi/EasyHDR/blob/main/LICENSE"><img src="https://img.shields.io/github/license/edbfi/EasyHDR" alt="License"></a>
-  <a href="https://github.com/edbfi/EasyHDR/stargazers"><img src="https://img.shields.io/github/stars/edbfi/EasyHDR.svg" alt="GitHub Stars"></a>
-  <a href="https://deepwiki.com/edbfi/EasyHDR"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
+  <a href="https://github.com/edbfi/EasyHDR/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0--only-blue?style=flat" alt="License: AGPL-3.0-only"></a>
+  <a href="https://github.com/slint-ui/slint" title="Slint source repository"><img src="https://img.shields.io/badge/Slint-2379F4?style=flat" alt="Slint"></a>
+  <a href="https://github.com/rust-lang/rust" title="Rust source repository"><img src="https://img.shields.io/badge/Rust-000000?style=flat&amp;logo=rust&amp;logoColor=white" alt="Rust"></a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/edbfi/EasyHDR/releases"><img src="https://img.shields.io/github/v/tag/edbfi/EasyHDR?sort=semver&amp;style=flat" alt="GitHub tag (SemVer)"></a>
 </p>
 
 A lightweight Windows utility that automatically enables HDR when you launch configured applications and disables it when you close them.
