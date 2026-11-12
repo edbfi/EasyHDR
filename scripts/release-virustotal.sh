@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Copy as scripts/release-virustotal.sh. Privileged jobs that publish an asset run it:
 # release.yml `publish` (EasyHDR, game-mods) and nightly.yml `scan` (game-mods).
 # VirusTotal report for a release asset. Needs only bash, coreutils, curl and jq.

@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Release automation. On a published release:
 #   verify   (unprivileged) the tag's commit must be on main, before any build;
 #   build    (unprivileged, Windows) builds and smoke-tests the release .exe;

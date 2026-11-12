@@ -5,7 +5,7 @@ edition = "2024"
 rust-version = "1.93"
 authors = ["engels74"]
 description = "Automatic HDR management for Windows"
-license = "AGPL-3.0-only"
+license = "AGPL-3.0-or-later"
 
 # fuzz/ shares this workspace and its Cargo.lock, so a dependency bump re-locks the fuzz
 # crate too: Dependabot never re-locks a separate lockfile behind a path dependency

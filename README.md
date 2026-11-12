@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/svg/easyhdr-logo.svg" alt="EasyHDR logo" width="256" height="256">
+  <img src="assets/svg/easyhdr-logo.svg" alt="EasyHDR logo" width="160" height="160">
 </p>
 
 <h1 align="center">EasyHDR</h1>
@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/edbfi/EasyHDR/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0--only-blue?style=flat" alt="License: AGPL-3.0-only"></a>
+  <a href="https://github.com/edbfi/EasyHDR/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0--or--later-blue?style=flat" alt="License: AGPL-3.0-or-later"></a>
   <a href="https://github.com/slint-ui/slint" title="Slint source repository"><img src="https://img.shields.io/badge/Slint-2379F4?style=flat" alt="Slint"></a>
   <a href="https://github.com/rust-lang/rust" title="Rust source repository"><img src="https://img.shields.io/badge/Rust-000000?style=flat&amp;logo=rust&amp;logoColor=white" alt="Rust"></a>
 </p>
@@ -134,4 +134,4 @@ cargo +nightly fuzz run fuzz_windows_api -- -max_total_time=60
 
 ## License
 
-This project is licensed under the GNU Affero General Public License v3.0 (AGPL-3.0). See [LICENSE](LICENSE) for details.
+Original EasyHDR code is licensed under the GNU Affero General Public License, version 3 or (at your option) any later version (AGPL-3.0-or-later). See [LICENSE](LICENSE) for the full license text. Third-party components retain their respective licenses and notices.
