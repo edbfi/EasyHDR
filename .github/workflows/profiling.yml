@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Performance profiling: manual dispatch only; every selected job uploads its
 # results as an artifact.
 #   benchmarks  Criterion benches (target/criterion)

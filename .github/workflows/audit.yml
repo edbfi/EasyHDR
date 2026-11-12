@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Nightly RustSec audit: advisories change without a commit, so the workspace
 # lockfile is checked every night. --workspace roots the graph at every member,
 # so the fuzz crate's dependencies are covered as well.
