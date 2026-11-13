@@ -12,6 +12,7 @@
   <a href="https://github.com/edbfi/EasyHDR/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0--or--later-blue?style=flat" alt="License: AGPL-3.0-or-later"></a>
   <a href="https://github.com/slint-ui/slint" title="Slint source repository"><img src="https://img.shields.io/badge/Slint-2379F4?style=flat" alt="Slint"></a>
   <a href="https://github.com/rust-lang/rust" title="Rust source repository"><img src="https://img.shields.io/badge/Rust-000000?style=flat&amp;logo=rust&amp;logoColor=white" alt="Rust"></a>
+  <a href="https://github.com/edbfi/EasyHDR/actions/workflows/ci.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/edbfi/EasyHDR/ci.yml?branch=main&amp;event=push&amp;label=CI&amp;style=flat" alt="CI"></a>
 </p>
 
 <p align="center">
